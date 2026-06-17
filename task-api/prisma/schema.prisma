@@ -1,0 +1,85 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql" // Agar MySQL hai toh "mysql" likho
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+// ENUMS
+// --------------------------------------------------------
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  TESTING
+  DONE
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // Temporary @default(1) lagaya taaki purane users ko 1 id mil jaye
+  roleId    Int      @default(1) 
+  role      Role     @relation(fields: [roleId], references: [id])
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique // e.g., "ADMIN", "PMO", "TEAM_LEADER", "TEAM_MEMBER"
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id      Int              @id @default(autoincrement())
+  action  String           @unique // e.g., "project:create", "project:edit", "task:delete"
+  roles   RolePermission[]
+}
+
+// Junction Table for Many-to-Many Role-Permission Mapping
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Project {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  description String
+  status      ProjectStatus @default(PLANNING)
+  createdAt   DateTime      @default(now())
+  
+  tasks       Task[]
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String
+  status      TaskStatus @default(TODO)
+  createdAt   DateTime   @default(now())
+  
+  projectId   Int
+  // FIXED: Added onDelete: Cascade to safely handle database cleanup
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
