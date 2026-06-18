@@ -41,7 +41,8 @@ export default function ProjectsGrid() {
     };
   }, []);
 
-  if (loading) return <div className="text-sm text-slate-500">Loading projects…</div>;
+  if (loading)
+    return <div className="text-sm text-slate-500">Loading projects…</div>;
   if (error) return <div className="text-sm text-rose-600">{error}</div>;
   if (!projects || projects.length === 0)
     return <div className="text-sm text-slate-500">No projects found</div>;
@@ -53,7 +54,9 @@ export default function ProjectsGrid() {
           key={p.id}
           className={`relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm`}
         >
-          <div className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${p.status === "PLANNING" ? "border-sky-500 bg-sky-500" : "border-emerald-500 bg-emerald-500"}`} />
+          <div
+            className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${p.status === "PLANNING" ? "border-sky-500 bg-sky-500" : "border-emerald-500 bg-emerald-500"}`}
+          />
 
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -64,7 +67,9 @@ export default function ProjectsGrid() {
 
               <p className="mt-2 text-sm text-slate-600">{p.description}</p>
 
-              <div className="mt-3 text-xs text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</div>
+              <div className="mt-3 text-xs text-slate-500">
+                {new Date(p.createdAt).toLocaleDateString()}
+              </div>
             </div>
 
             <div className="flex items-start gap-2">
@@ -74,7 +79,9 @@ export default function ProjectsGrid() {
 
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-slate-600">
-              <span className="font-semibold text-slate-800">{p._count?.tasks ?? 0}</span>
+              <span className="font-semibold text-slate-800">
+                {p._count?.tasks ?? 0}
+              </span>
               <span className="ml-2 text-xs text-slate-500">Tasks</span>
             </div>
 

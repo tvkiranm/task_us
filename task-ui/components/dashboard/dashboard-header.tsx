@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Menu, Search, Bell, ChevronDown, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,28 +35,29 @@ function DashboardHeader({
   currentDescription,
 }: DashboardHeaderProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [initials, setInitials] = useState("AC");
 
-  useEffect(() => {
+  const [userName, setUserName] = useState<string | null>(() => {
     try {
+      if (typeof window === "undefined") return null;
       const raw = localStorage.getItem("user");
-      if (raw) {
-        const u = JSON.parse(raw);
-        if (u && u.name) {
-          setUserName(u.name);
-          const parts = u.name.split(" ");
-          const i = parts
-            .map((p) => p[0])
-            .slice(0, 2)
-            .join("");
-          setInitials(i.toUpperCase());
-        }
-      }
+      if (!raw) return null;
+      const u = JSON.parse(raw) as { name?: unknown };
+      if (u && typeof u.name === "string") return u.name;
     } catch (e) {
       // ignore
     }
-  }, []);
+    return null;
+  });
+
+  const initials = useMemo(() => {
+    if (!userName) return "AC";
+    const parts = userName.split(" ");
+    const i = parts
+      .map((p) => (typeof p === "string" && p.length > 0 ? p[0] : ""))
+      .slice(0, 2)
+      .join("");
+    return (i || "AC").toUpperCase();
+  }, [userName]);
 
   const signOut = () => {
     localStorage.removeItem("token");
