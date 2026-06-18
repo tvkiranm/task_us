@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   DragDropProvider,
   DragOverlay,
@@ -12,6 +13,17 @@ import { MessageSquare, MoreHorizontal, Paperclip } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 
 // 1. Types Definitions
 type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
@@ -140,39 +152,68 @@ function StatusColumn({
 
 // 4. Main Kanban App Context Handler
 export default function KanbanBoard() {
-  // Initial Hardcoded Data Dummy Structure Mocking
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "task-1",
-      name: "Update the date of the PM",
-      description: "Sync with Amit regarding compliance dates",
-      status: "TODO",
-      assignee: "KK",
-      progress: 20,
-      dueDate: "12/10/2026",
-    },
-    {
-      id: "task-2",
-      name: "Refactor Auth Matrix Security",
-      description: "Implement safe fallbacks for JWT strings",
-      status: "IN_PROGRESS",
-      assignee: "AS",
-      progress: 60,
-      dueDate: "18/10/2026",
-    },
-    {
-      id: "task-3",
-      name: "Setup Prisma 7 Driver Adapters",
-      description: "Verify operational metrics with local postgreSQL",
-      status: "DONE",
-      assignee: "Erico",
-      progress: 100,
-      dueDate: "15/10/2026",
-    },
-  ]);
+  // Tasks loaded from backend (supports optional project filter via query param)
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const searchParams = useSearchParams();
+  const projectIdParam = searchParams?.get("projectId");
+
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const params: any = {};
+        if (projectIdParam) params.projectId = projectIdParam;
+        const res = await api.get("/tasks", { params });
+        if (!mounted) return;
+        const items = res.data?.data ?? [];
+        const mapped: Task[] = items.map((t: any) => ({
+          id: String(t.id),
+          name: t.name,
+          description: t.description,
+          status: t.status as TaskStatus,
+          assignee: t.assignee ?? "Unassigned",
+          progress: 0,
+          dueDate: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "",
+        }));
+        setTasks(mapped);
+      } catch (e) {
+        console.error("Failed to load tasks", e);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [projectIdParam]);
 
   // Drag overlay active item id
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [taskName, setTaskName] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskProjectId, setTaskProjectId] = useState<number | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  // load projects for dropdown when drawer opens
+  React.useEffect(() => {
+    if (!drawerOpen) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get("/projects");
+        if (!mounted) return;
+        setProjects(res.data?.data ?? []);
+        if ((res.data?.data ?? []).length > 0) setTaskProjectId((res.data.data[0].id as number) ?? null);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [drawerOpen]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const id = event.active?.id || event?.operation?.source?.id;
@@ -235,7 +276,86 @@ export default function KanbanBoard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="default">Add Task</Button>
+          <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <DrawerTrigger>
+              <Button variant="default">Add Task</Button>
+            </DrawerTrigger>
+
+            <DrawerContent side="right" className="p-0">
+              <div className="border-b px-6 py-4">
+                <DrawerTitle>Create Task</DrawerTitle>
+                <DrawerDescription>Add a new task to a project.</DrawerDescription>
+              </div>
+
+              <form
+                className="p-6 space-y-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!taskName || !taskProjectId) return;
+                  setCreating(true);
+                  try {
+                    const res = await api.post("/tasks", {
+                      name: taskName,
+                      description: taskDescription,
+                      status: "TODO",
+                      projectId: taskProjectId,
+                    });
+                    const created = res.data?.data;
+                    // Map to UI Task type
+                    const newTask: Task = {
+                      id: String(created.id),
+                      name: created.name,
+                      description: created.description,
+                      status: created.status as TaskStatus,
+                      assignee: "You",
+                      progress: 0,
+                      dueDate: new Date().toLocaleDateString(),
+                    };
+                    setTasks((prev) => [newTask, ...prev]);
+                    setTaskName("");
+                    setTaskDescription("");
+                    setDrawerOpen(false);
+                  } catch (err) {
+                    console.error("Failed to create task", err);
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+              >
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Project</label>
+                  <select
+                    className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
+                    value={taskProjectId ?? undefined}
+                    onChange={(ev) => setTaskProjectId(parseInt((ev.target as HTMLSelectElement).value, 10))}
+                  >
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+                  <Input value={taskName} onChange={(e) => setTaskName((e.target as HTMLInputElement).value)} required />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+                  <textarea value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} className="mt-1 w-full min-h-[96px] rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                </div>
+
+                <DrawerFooter>
+                  <div className="flex items-center justify-end gap-3">
+                    <DrawerClose className="text-sm text-slate-600">Cancel</DrawerClose>
+                    <Button type="submit" variant="default">{creating ? "Creating..." : "Create task"}</Button>
+                  </div>
+                </DrawerFooter>
+              </form>
+            </DrawerContent>
+          </Drawer>
         </div>
       </header>
 
