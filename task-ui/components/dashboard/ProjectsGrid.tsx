@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MoreHorizontal } from "lucide-react";
 
@@ -26,7 +26,7 @@ export default function ProjectsGrid() {
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.get("http://localhost:3004/api/v1/projects");
+        const res = await api.get("/projects");
         if (!cancelled) setProjects(res.data?.data ?? []);
       } catch (err: any) {
         if (!cancelled) setError(err?.message ?? "Failed to load projects");

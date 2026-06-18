@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, Search, Bell, ChevronDown, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,35 @@ function DashboardHeader({
   currentDescription,
 }: DashboardHeaderProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [initials, setInitials] = useState("AC");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && u.name) {
+          setUserName(u.name);
+          const parts = u.name.split(" ");
+          const i = parts
+            .map((p) => p[0])
+            .slice(0, 2)
+            .join("");
+          setInitials(i.toUpperCase());
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const signOut = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    // navigate to login
+    if (typeof window !== "undefined") window.location.href = "/login";
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
@@ -50,7 +79,10 @@ function DashboardHeader({
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent className="w-[320px] border-r border-slate-200 p-0" side="left">
+          <SheetContent
+            className="w-[320px] border-r border-slate-200 p-0"
+            side="left"
+          >
             <SheetHeader className="sr-only">
               <SheetTitle>Workspace navigation</SheetTitle>
             </SheetHeader>
@@ -65,8 +97,12 @@ function DashboardHeader({
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">
             Mini Jira
           </p>
-          <h1 className="truncate text-lg font-semibold text-slate-950">{currentLabel}</h1>
-          <p className="truncate text-sm text-slate-500">{currentDescription}</p>
+          <h1 className="truncate text-lg font-semibold text-slate-950">
+            {currentLabel}
+          </h1>
+          <p className="truncate text-sm text-slate-500">
+            {currentDescription}
+          </p>
         </div>
 
         <div className="hidden min-w-[280px] flex-1 items-center lg:flex">
@@ -97,11 +133,11 @@ function DashboardHeader({
               <Button className="rounded-full px-2 pr-3" variant="outline">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-gradient-to-br from-fuchsia-500 to-violet-500 text-white">
-                    AC
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <span className="hidden text-sm font-semibold text-slate-700 sm:inline">
-                  Ava Chen
+                  {userName ?? "Ava Chen"}
                 </span>
                 <ChevronDown className="h-4 w-4 text-slate-500" />
               </Button>
@@ -123,13 +159,13 @@ function DashboardHeader({
                 <Bell className="mr-2 h-4 w-4" />
                 Notification preferences
               </DropdownMenuItem>
-              <Link
-                className="flex items-center rounded-2xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
-                href="/login"
+              <button
+                onClick={signOut}
+                className="flex w-full items-center rounded-2xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
-              </Link>
+              </button>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

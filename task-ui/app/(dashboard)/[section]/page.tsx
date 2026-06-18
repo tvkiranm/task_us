@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getDashboardSectionConfig } from "@/components/dashboard/dashboard-data";
-import { DashboardSectionPage } from "@/components/dashboard/dashboard-section-page";
+import ProjectsGrid from "@/components/dashboard/ProjectsGrid";
 
 type DashboardDynamicSectionPageProps = {
   params: Promise<{
@@ -18,5 +18,14 @@ export default async function DashboardDynamicSectionPage({
     notFound();
   }
 
-  return <DashboardSectionPage section={section} />;
+  if (section === "projects") {
+    return <ProjectsGrid />;
+  }
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold">{config.title}</h1>
+      <p className="mt-2 text-sm text-slate-600">{config.description}</p>
+    </div>
+  );
 }

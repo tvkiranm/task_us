@@ -1,5 +1,5 @@
-import { DashboardSectionPage } from "@/components/dashboard/dashboard-section-page";
+import ProjectsGrid from "@/components/dashboard/ProjectsGrid";
 
 export default function Projects() {
-  return <DashboardSectionPage section="projects" />;
+  return <ProjectsGrid />;
 }
