@@ -10,7 +10,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -31,7 +31,9 @@ export default function Login() {
       // Navigate to dashboard
       router.push("/dashboard");
     } catch (err) {
-      setError(err.message || String(err));
+      if (err instanceof Error) {
+        setError(err.message || String(err));
+      }
     } finally {
       setLoading(false);
     }
