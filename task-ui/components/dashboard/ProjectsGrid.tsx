@@ -74,8 +74,8 @@ export default function ProjectsGrid() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ??
-          err?.message ??
-          "Failed to create project",
+        err?.message ??
+        "Failed to create project",
       );
     }
   }
@@ -83,8 +83,7 @@ export default function ProjectsGrid() {
   if (loading)
     return <div className="text-sm text-slate-500">Loading projects…</div>;
   if (error) return <div className="text-sm text-rose-600">{error}</div>;
-  if (!projects || projects.length === 0)
-    return <div className="text-sm text-slate-500">No projects found</div>;
+
 
   return (
     <div>
@@ -150,7 +149,7 @@ export default function ProjectsGrid() {
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((p) => (
+        {projects && projects?.map((p) => (
           <article
             key={p.id}
             role="button"
