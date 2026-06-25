@@ -1,6 +1,8 @@
 // src/common/middleware/auth.middleware.js
 const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = process.env.JWT_SECRET || "amity";
+
 /**
  * Gate 1: Authentication Middleware (Token Checker)
  * Iska kaam hai sirf yeh dekhna ki user logged in hai ya nahi.
@@ -17,8 +19,8 @@ const autherizedUser = (req, res, next) => {
       });
     }
 
-    // Token verify karna (Using your fallback 'amity')
-    const verified = jwt.verify(token, process.env.JWT_SECRET || "amity");
+    // Token verify karna
+    const verified = jwt.verify(token, JWT_SECRET);
 
     // CRITICAL UPDATE: Token se decoded data (id, email, aur ROLE) ko request me save karna
     req.user = verified;
@@ -26,7 +28,7 @@ const autherizedUser = (req, res, next) => {
     return next(); // Agle gatekeeper ya controller par bhejo
   } catch (error) {
     console.log("JWT Verification Error:", error);
-    return res.status(403).json({
+    return res.status(401).json({
       success: false,
       message: "Invalid or Expired Token!",
     });
@@ -63,5 +65,6 @@ const authorizeRoles = (...allowedRoles) => {
 // Dono ko export kar rahe hain taaki routes me direct use ho sakein
 module.exports = {
   autherizedUser,
+  authorizedUser: autherizedUser,
   authorizeRoles,
 };

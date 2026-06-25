@@ -1,3 +1,4 @@
+const logAudit = require("../../common/utils/auditLogger");
 const {
   getAllProjects: fetchAllProjects,
   createNewProject,
@@ -26,10 +27,19 @@ exports.createProject = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Project name is required" });
     }
-    const project = await createNewProject({
-      name,
-      description,
+    const project = await createNewProject({ name, description });
+
+    // 🔥 AUDIT PIPELINE TRIGGER
+    await logAudit({
+      userId: req.user.id, // Auth middleware se mila hua token user context
+      userEmail: req.user.email,
+      action: "CREATE_PROJECT",
+      module: "PROJECT",
+      recordId: project.id,
+      newData: project,
+      ipAddress: req.ip,
     });
+
     return res.status(201).json({ success: true, data: project });
   } catch (error) {
     console.error("createProject failed:", error);

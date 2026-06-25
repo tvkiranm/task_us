@@ -3,10 +3,10 @@ const prisma = require("../../config/db");
 
 const createNewProjectTask = async (projectData) => {
   try {
-    const { name, description, status, projectId } = projectData;
+    const { name, description, status, projectId, dueDate } = projectData;
 
     return await prisma.task.create({
-      data: { name, description, status, projectId },
+      data: { name, description, status, projectId, dueDate },
     });
   } catch (error) {
     console.error("Create new task operation failed execution pool:", error);
@@ -16,7 +16,7 @@ const createNewProjectTask = async (projectData) => {
 
 const getAllProjectTask = async (filter = {}) => {
   try {
-    const { projectId, page = 1, limit = 10 } = filter;
+    const { projectId, status, page = 1, limit = 10 } = filter;
 
     // Calculate skip interval indexes for scaling queries
     const skip = (page - 1) * limit;
@@ -25,6 +25,9 @@ const getAllProjectTask = async (filter = {}) => {
     let whereCondition = {};
     if (projectId && !Number.isNaN(projectId)) {
       whereCondition.projectId = projectId;
+    }
+    if (status) {
+      whereCondition.status = status;
     }
 
     // Parallel processing optimization matrix execution using Promise.all

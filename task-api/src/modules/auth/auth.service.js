@@ -4,6 +4,8 @@ const prisma = require("../../config/db"); // Hamara single Prisma 7 client inst
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = process.env.JWT_SECRET || "amity";
+
 /**
  * Business Logic for User Registration
  */
@@ -68,7 +70,7 @@ const loginUser = async (loginData) => {
   // 3. Generate JWT Token (Identity Proof)
   const token = jwt.sign(
     { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || "super_secret_fallback_key",
+    JWT_SECRET,
     { expiresIn: "1d" }, // Token 1 din me expire ho jayega
   );
 

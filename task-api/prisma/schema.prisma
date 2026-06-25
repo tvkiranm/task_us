@@ -28,17 +28,33 @@ enum TaskStatus {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
-  email     String   @unique
+  email     String     @unique
   password  String
-  createdAt DateTime @default(now())
-
-  // Temporary @default(1) lagaya taaki purane users ko 1 id mil jaye
-  roleId    Int      @default(1) 
+  roleId    Int
+  
+  // 🔥 YEH LINE ADD KARO: User model ko batao ki uske paas multiple audit logs ho sakte hain
+  auditLogs AuditLog[] 
   role      Role     @relation(fields: [roleId], references: [id])
+  // Aapke baaki ke relations jo pehle se hain (jaise tasks, projects etc.) unhe rehne dena
 }
 
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int      
+  userEmail   String   
+  action      String   
+  module      String   
+  recordId    String   
+  oldData     Json?    
+  newData     Json?    
+  ipAddress   String?  
+  createdAt   DateTime @default(now())
+
+  // Yeh line bilkul sahi hai tumhari
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 model Role {
   id          Int              @id @default(autoincrement())
   name        String           @unique // e.g., "ADMIN", "PMO", "TEAM_LEADER", "TEAM_MEMBER"
@@ -78,6 +94,7 @@ model Task {
   description String
   status      TaskStatus @default(TODO)
   createdAt   DateTime   @default(now())
+  dueDate     DateTime?
   
   projectId   Int
   // FIXED: Added onDelete: Cascade to safely handle database cleanup

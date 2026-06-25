@@ -17,7 +17,18 @@ const createTaskSchema = z.object({
     (val) => Number(val),
     z.number().int().positive("Invalid project identification token"),
   ),
+  dueDate: z
+    .preprocess(
+      (val) => {
+        if (val === undefined || val === null || val === "") return undefined;
+        return new Date(val);
+      },
+      z.date({ message: "Invalid task due date" }).optional(),
+    )
+    .optional(),
 });
+
+const taskStatusValues = ["TODO", "IN_PROGRESS", "REVIEW", "TESTING", "DONE"];
 
 exports.getAllTasks = async (req, res) => {
   try {
@@ -27,8 +38,13 @@ exports.getAllTasks = async (req, res) => {
     const projectId = req.query.projectId
       ? parseInt(req.query.projectId, 10)
       : undefined;
+    const status =
+      typeof req.query.status === "string" &&
+      taskStatusValues.includes(req.query.status)
+        ? req.query.status
+        : undefined;
 
-    const result = await getAllProjectTask({ projectId, page, limit });
+    const result = await getAllProjectTask({ projectId, status, page, limit });
 
     return res.status(200).json({
       success: true,
