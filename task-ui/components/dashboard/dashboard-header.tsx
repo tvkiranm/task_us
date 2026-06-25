@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Menu, Search, Bell, ChevronDown, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { DashboardSidebar } from "./dashboard-sidebar";
+import { clearAuthSession } from "@/lib/auth-storage";
 
 type DashboardHeaderProps = {
   pathname: string;
@@ -29,25 +29,44 @@ type DashboardHeaderProps = {
   currentDescription: string;
 };
 
+function subscribeToStoredUser(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function getStoredUserSnapshot() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("user");
+}
+
+function getServerUserSnapshot() {
+  return null;
+}
+
 function DashboardHeader({
   pathname,
   currentLabel,
   currentDescription,
 }: DashboardHeaderProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const storedUser = useSyncExternalStore(
+    subscribeToStoredUser,
+    getStoredUserSnapshot,
+    getServerUserSnapshot,
+  );
 
-  const [userName, setUserName] = useState<string | null>(() => {
+  const userName = useMemo(() => {
     try {
-      if (typeof window === "undefined") return null;
-      const raw = localStorage.getItem("user");
-      if (!raw) return null;
-      const u = JSON.parse(raw) as { name?: unknown };
-      if (u && typeof u.name === "string") return u.name;
-    } catch (e) {
+      if (!storedUser) return null;
+      const user = JSON.parse(storedUser) as { name?: unknown };
+      if (user && typeof user.name === "string") return user.name;
+    } catch {
       // ignore
     }
     return null;
-  });
+  }, [storedUser]);
 
   const initials = useMemo(() => {
     if (!userName) return "AC";
@@ -60,15 +79,13 @@ function DashboardHeader({
   }, [userName]);
 
   const signOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    // navigate to login
+    clearAuthSession();
     if (typeof window !== "undefined") window.location.href = "/login";
   };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
-      <div className="flex flex-wrap items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
+      <div className="flex min-h-[76px] items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
           <SheetTrigger asChild>
             <Button
@@ -106,11 +123,11 @@ function DashboardHeader({
           </p>
         </div>
 
-        <div className="hidden min-w-[280px] flex-1 items-center lg:flex">
+        <div className="hidden min-w-[260px] max-w-[360px] flex-1 items-center lg:flex">
           <label className="relative flex w-full items-center">
             <Search className="pointer-events-none absolute left-4 h-4 w-4 text-slate-400" />
             <Input
-              className="h-11 rounded-full bg-slate-50 pl-10 pr-20"
+              className="h-11 rounded-full border-slate-200 bg-slate-50 pl-10 pr-20 shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
               placeholder="Search tasks, projects, people..."
               type="search"
             />
@@ -120,7 +137,7 @@ function DashboardHeader({
           </label>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-3">
           <Button className="hidden md:inline-flex" variant="default">
             + New Task
           </Button>

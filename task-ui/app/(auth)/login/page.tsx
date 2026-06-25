@@ -1,7 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getStoredToken, storeAuthSession } from "@/lib/auth-storage";
+
+function getSafeRedirectPath() {
+  if (typeof window === "undefined") return "/dashboard";
+
+  const redirectPath = new URLSearchParams(window.location.search).get(
+    "redirect",
+  );
+
+  if (
+    !redirectPath ||
+    !redirectPath.startsWith("/") ||
+    redirectPath.startsWith("//")
+  ) {
+    return "/dashboard";
+  }
+
+  return redirectPath;
+}
 
 export default function Login() {
   const router = useRouter();
@@ -9,6 +28,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token = getStoredToken();
+    if (token) {
+      storeAuthSession(token);
+      router.replace(getSafeRedirectPath());
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,12 +51,11 @@ export default function Login() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Login failed");
 
-      // Save token and user to localStorage
-      if (json.token) localStorage.setItem("token", json.token);
-      if (json.user) localStorage.setItem("user", JSON.stringify(json.user));
+      if (!json.token) throw new Error("Login response did not include token");
 
-      // Navigate to dashboard
-      router.push("/dashboard");
+      storeAuthSession(json.token, json.user);
+
+      router.replace(getSafeRedirectPath());
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || String(err));

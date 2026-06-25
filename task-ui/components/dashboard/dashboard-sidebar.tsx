@@ -27,10 +27,10 @@ function DashboardSidebar({
   const pathname = pathnameProp ?? pathnameFromHook;
 
   return (
-    <aside className={cn("flex h-full flex-col bg-white/90", className)}>
-      <div className="flex items-center justify-between px-5 py-5">
+    <aside className={cn("flex h-full min-h-screen flex-col bg-white", className)}>
+      <div className="flex h-[76px] items-center justify-between px-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-black text-white shadow-lg shadow-violet-500/20">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-black text-white shadow-lg shadow-violet-500/20">
             MJ
           </div>
           <div>
@@ -44,20 +44,20 @@ function DashboardSidebar({
 
       <Separator />
 
-      <div className="px-4 py-5">
-        <p className="px-2 text-xs  uppercase tracking-[0.24em] text-slate-500">
+      <div className="px-4 py-6">
+        <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-500">
           Workspace
         </p>
-        <nav className="mt-4 space-y-1">
+        <nav className="mt-5 space-y-1.5">
           {dashboardNavItems.map((item) => {
             const active = isActivePath(pathname, item.href);
 
             return (
               <Link
                 className={cn(
-                  "flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium transition",
+                  "flex h-12 items-center justify-between rounded-2xl px-3.5 text-sm font-semibold transition",
                   active
-                    ? "bg-slate-150 text-white shadow-lg shadow-slate-950/10"
+                    ? "bg-white text-slate-950 shadow-[0_14px_34px_rgba(15,23,42,0.12)] ring-1 ring-slate-100"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
                 )}
                 href={item.href}
@@ -69,10 +69,10 @@ function DashboardSidebar({
                   <Badge
                     className={cn(
                       active
-                        ? "bg-white/15 text-white"
+                        ? "bg-slate-100 text-slate-700"
                         : "bg-slate-100 text-slate-700",
                     )}
-                    variant={active ? "default" : "secondary"}
+                    variant="secondary"
                   >
                     {item.count}
                   </Badge>
@@ -85,7 +85,7 @@ function DashboardSidebar({
 
       <div className="mt-auto p-4">
         <Separator className="mb-4" />
-        <div className="rounded-[1.5rem] bg-slate-950 px-4 py-4 text-white shadow-[0_20px_60px_rgba(15,23,42,0.2)]">
+        <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white shadow-[0_20px_60px_rgba(15,23,42,0.2)]">
           <div className="flex items-center gap-3">
             <Avatar className="h-11 w-11">
               <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-sky-500 text-slate-950">

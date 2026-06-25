@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import { clearAuthSession, getStoredToken } from "@/lib/auth-storage";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3004/api/v1";
@@ -16,7 +17,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
@@ -34,10 +35,9 @@ api.interceptors.response.use(
     const status = err?.response?.status;
     if (status === 401) {
       try {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        clearAuthSession();
         if (typeof window !== "undefined") window.location.href = "/login";
-      } catch (e) {
+      } catch {
         // ignore
       }
     }

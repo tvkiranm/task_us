@@ -31,9 +31,9 @@ function DashboardShell({ children }: DashboardShellProps) {
       : `Route ${currentNav.href}`;
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8faff_0%,#eef3fb_42%,#e7edf7_100%)] text-slate-950">
-      <div className="mx-auto grid min-h-screen lg:grid-cols-[290px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-slate-200 bg-white/75 backdrop-blur-xl lg:block">
+    <div className="min-h-screen bg-[#eef3fb] text-slate-950">
+      <div className="grid min-h-screen lg:grid-cols-[290px_minmax(0,1fr)]">
+        <aside className="hidden border-r border-slate-200 bg-white lg:block">
           <DashboardSidebar pathname={pathname} />
         </aside>
 
@@ -43,7 +43,7 @@ function DashboardShell({ children }: DashboardShellProps) {
             currentLabel={currentLabel}
             pathname={pathname}
           />
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-12 lg:py-6">
             {children}
           </main>
         </div>

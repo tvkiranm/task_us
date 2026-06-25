@@ -38,6 +38,20 @@ interface Task {
   dueDate: string;
 }
 
+type ApiTask = {
+  id: string | number;
+  name: string;
+  description: string;
+  status: TaskStatus;
+  assignee?: string | null;
+  createdAt?: string | null;
+};
+
+type ApiProject = {
+  id: number;
+  name: string;
+};
+
 // 2. Draggable Task Card Component
 function DraggableTaskCard({ task }: { task: Task }) {
   const { ref } = useDraggable({ id: task.id });
@@ -162,12 +176,12 @@ export default function KanbanBoard() {
 
     (async () => {
       try {
-        const params: any = {};
+        const params: { projectId?: string } = {};
         if (projectIdParam) params.projectId = projectIdParam;
         const res = await api.get("/tasks", { params });
         if (!mounted) return;
-        const items = res.data?.data ?? [];
-        const mapped: Task[] = items.map((t: any) => ({
+        const items = (res.data?.data ?? []) as ApiTask[];
+        const mapped: Task[] = items.map((t) => ({
           id: String(t.id),
           name: t.name,
           description: t.description,
@@ -190,7 +204,7 @@ export default function KanbanBoard() {
   // Drag overlay active item id
   const [activeId, setActiveId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<ApiProject[]>([]);
   const [taskName, setTaskName] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskProjectId, setTaskProjectId] = useState<number | null>(null);
@@ -268,7 +282,7 @@ export default function KanbanBoard() {
       onDragStart={handleDragStart}
       onDragCancel={handleDragCancel}
     >
-      <header className="flex items-center justify-between w-full p-4 bg-transparent">
+      <header className="flex w-full items-center justify-between gap-4 pb-6">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Tasks</h1>
           <p className="text-sm text-slate-500">
@@ -359,7 +373,7 @@ export default function KanbanBoard() {
         </div>
       </header>
 
-      <section className="flex flex-wrap gap-5 w-full p-4 items-start select-none">
+      <section className="flex w-full select-none flex-wrap items-start gap-5">
         <StatusColumn id="TODO" title="To Do">
           {tasks
             .filter((t) => t.status === "TODO")
